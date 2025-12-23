@@ -30,4 +30,9 @@ digital_out aligner = digital_out(Brain.ThreeWirePort.H);
 void vexcodeInit(void) {
   // Calibrate sensors if needed
   Inertial.calibrate();
+
+LeftFront.setBrake(coast);
+LeftBack.setBrake(coast);
+RightFront.setBrake(coast);
+RightBack.setBrake(coast);
 }
