@@ -107,19 +107,25 @@ void turnTo(double targetDeg) {
 
 void driveStraight(double inches) {
   // ---------- Constants ----------
-  const double WHEEL_DIAMETER = 2.75;     // inches (unchanged)
+  const double WHEEL_DIAMETER = 2.75;
   const double WHEEL_CIRC     = M_PI * WHEEL_DIAMETER;
 
-  const double FAST_PWR  = 50;
+  const double FAST_PWR  = 100;
   const double SLOW_PWR  = 20;
   const double SLOW_ZONE = 6.0;
   const double STOP_ZONE = 0.5;
 
   const double kH = 1.2;
 
-  // 🔧 MANUAL DISTANCE SCALE (TUNE THIS)
-  // Start around 0.45–0.50 based on your data
+  // 🔧 MANUAL DISTANCE SCALE (unchanged)
   const double DIST_SCALE = 0.47;
+
+  // 🔧 SLEW RATE (max power change per loop)
+  const double SLEW_STEP = 4.0;   // % per 20ms → smooth but responsive
+
+  // ---------- State ----------
+  double leftCmd  = 0;
+  double rightCmd = 0;
 
   // ---------- Reset encoders ----------
   LeftFront.resetPosition();
@@ -134,16 +140,12 @@ void driveStraight(double inches) {
   }
   double desiredHeading = -Inertial.rotation(deg);
 
-  // ---------- Apply scale ONLY HERE ----------
+  // ---------- Apply scale ----------
   double scaledInches = inches * DIST_SCALE;
+  double targetDeg = (scaledInches / WHEEL_CIRC) * 360.0;
 
-  double targetDeg =
-    (scaledInches / WHEEL_CIRC) * 360.0;
-
-  printf("\nDRIVE START\n");
-  printf("Commanded: %.2f in\n", inches);
-  printf("Scaled to : %.2f in (scale=%.3f)\n",
-         scaledInches, DIST_SCALE);
+  printf("\nDRIVE START %.2f in (scaled %.2f)\n",
+         inches, scaledInches);
 
   while (true) {
     // ----- Encoder distance -----
@@ -154,10 +156,8 @@ void driveStraight(double inches) {
     double avgDeg = (leftDeg + rightDeg) / 2.0;
 
     double errorDeg = targetDeg - avgDeg;
-    double errorIn =
-      (errorDeg / 360.0) * WHEEL_CIRC;
+    double errorIn  = (errorDeg / 360.0) * WHEEL_CIRC;
 
-    // ----- Stop -----
     if (fabs(errorIn) < STOP_ZONE) {
       printf("LOGIC STOP err=%.2f in\n", errorIn);
       break;
@@ -173,21 +173,48 @@ void driveStraight(double inches) {
     double headingError   = desiredHeading - currentHeading;
     double turnCorrection = headingError * kH;
 
-    double leftPower  = basePower - turnCorrection;
-    double rightPower = basePower + turnCorrection;
+    double targetLeft  = basePower - turnCorrection;
+    double targetRight = basePower + turnCorrection;
 
-    // Clamp
-    if (leftPower  >  100) leftPower  =  100;
-    if (leftPower  < -100) leftPower  = -100;
-    if (rightPower >  100) rightPower =  100;
-    if (rightPower < -100) rightPower = -100;
+    // ----- Clamp targets -----
+    if (targetLeft  >  100) targetLeft  =  100;
+    if (targetLeft  < -100) targetLeft  = -100;
+    if (targetRight >  100) targetRight =  100;
+    if (targetRight < -100) targetRight = -100;
 
-    printf("errIn=%.2f  headErr=%.2f\n",
-           errorIn, headingError);
+    // ----- Slew-rate limit -----
+    if (targetLeft > leftCmd + SLEW_STEP)
+      leftCmd += SLEW_STEP;
+    else if (targetLeft < leftCmd - SLEW_STEP)
+      leftCmd -= SLEW_STEP;
+    else
+      leftCmd = targetLeft;
 
-    leftDrive.spin(vex::fwd, leftPower,  vex::percent);
-    rightDrive.spin(vex::fwd, rightPower, vex::percent);
+    if (targetRight > rightCmd + SLEW_STEP)
+      rightCmd += SLEW_STEP;
+    else if (targetRight < rightCmd - SLEW_STEP)
+      rightCmd -= SLEW_STEP;
+    else
+      rightCmd = targetRight;
 
+    // ----- Debug -----
+    printf("errIn=%.2f  L=%.1f→%.1f  R=%.1f→%.1f\n",
+           errorIn, targetLeft, leftCmd,
+           targetRight, rightCmd);
+
+    // ----- Drive -----
+    leftDrive.spin(vex::fwd, leftCmd,  vex::percent);
+    rightDrive.spin(vex::fwd, rightCmd, vex::percent);
+
+    wait(20, vex::msec);
+  }
+
+  // ---------- Smooth stop ----------
+  for (int i = 0; i < 5; i++) {
+    leftCmd  *= 0.5;
+    rightCmd *= 0.5;
+    leftDrive.spin(vex::fwd, leftCmd,  vex::percent);
+    rightDrive.spin(vex::fwd, rightCmd, vex::percent);
     wait(20, vex::msec);
   }
 
@@ -196,6 +223,7 @@ void driveStraight(double inches) {
 
   printf("DRIVE END\n\n");
 }
+
 
 
 

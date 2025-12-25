@@ -36,7 +36,7 @@ void autonomousRoutine() {
 
 double startTime = Brain.timer(vex::msec);
 
-driveStraight(14);
+driveStraight(24);
 
 double endTime = Brain.timer(vex::msec);
 
