@@ -34,31 +34,16 @@ void scoreOn(int speed, directionType dir) {
 
 void autonomousRoutine() {
 
-  // Reset odometry so we start at (0,0) facing forward
-  resetOdometry();
-  startOdometry();
+double startTime = Brain.timer(vex::msec);
 
-  // --------------------------------------------------
-  // 1) Move forward to point (0, 5)
-  //    This means: same X, 5 inches to the left
-  // --------------------------------------------------
-  //driveToPoint(0, 5);
+driveStraight(14);
 
-  // --------------------------------------------------
-  // 2) Turn 90 degrees left
-  //    90 degrees = π / 2 radians
-  // --------------------------------------------------
-  //turnTo(M_PI / 2);
+double endTime = Brain.timer(vex::msec);
 
-  // --------------------------------------------------
-  // 3) Move to point (5, 5)
-  // --------------------------------------------------
-  //driveToPoint(5, 5);
 
-  // --------------------------------------------------
-  // 4) Move to point (10, 10)
-  // --------------------------------------------------
-  driveToPoint(10, 10);
+
+
+
 }
 
 

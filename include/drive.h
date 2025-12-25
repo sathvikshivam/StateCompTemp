@@ -1,8 +1,8 @@
 #pragma once
-#include "vex.h"
-#include <cmath>
 
-void driveVolts(double left, double right);
+void drivePercent(double left, double right);
+void stopDrive();
+
 void turnTo(double targetTheta);
-void driveToPoint(double tx, double ty);
-double angleWrap(double a);
+void driveStraight(double inches);
+void goToPoint(double targetX, double targetY);

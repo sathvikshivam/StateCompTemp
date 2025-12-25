@@ -11,7 +11,7 @@ void autonomous() {
 }
 
 void usercontrol() {
-  userControlRoutine();
+  //userControlRoutine();
 }
 
 int main() {
