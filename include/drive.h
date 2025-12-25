@@ -6,3 +6,6 @@ void stopDrive();
 void turnTo(double targetTheta);
 void driveStraight(double inches);
 void goToPoint(double targetX, double targetY);
+void goToPose(double targetX,
+              double targetY,
+              double targetHeadingDeg);

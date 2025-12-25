@@ -226,6 +226,63 @@ void driveStraight(double inches) {
 
 
 
+void goToPose(double targetX, double targetY, double targetHeadingDeg) {
+  printf("\n=== GO TO POSE ===\n");
+  printf("Start  x=%.2f y=%.2f th=%.2f deg\n",
+         x, y, theta * 180.0 / M_PI);
+  printf("Target x=%.2f y=%.2f th=%.2f deg\n",
+         targetX, targetY, targetHeadingDeg);
+
+  // -----------------------------
+  // 1️⃣ Compute vector to target
+  // -----------------------------
+  double dx = targetX - x;
+  double dy = targetY - y;
+
+  double distance = sqrt(dx*dx + dy*dy);
+
+  // atan2(x, y) because 0 rad = +Y in your system
+  double targetAngleRad = atan2(dx, dy);
+  double targetAngleDeg = targetAngleRad * 180.0 / M_PI;
+
+  double currentHeadingDeg = theta * 180.0 / M_PI;
+  double turnAngleDeg = angleWrap(
+      targetAngleRad - theta) * 180.0 / M_PI;
+
+  printf("dx=%.2f dy=%.2f\n", dx, dy);
+  printf("Turn to face target: %.2f deg\n", turnAngleDeg);
+  printf("Drive distance: %.2f in\n", distance);
+
+  // -----------------------------
+  // 2️⃣ Turn to face target point
+  // -----------------------------
+  if (fabs(turnAngleDeg) > 1.0) {
+    turnTo(targetAngleDeg);
+  }
+
+  // -----------------------------
+  // 3️⃣ Drive straight to target
+  // -----------------------------
+  if (distance > 0.5) {
+    driveStraight(distance);
+  }
+
+  // -----------------------------
+  // 4️⃣ Final heading correction
+  // -----------------------------
+  double finalTurnDeg = angleWrap(
+      (targetHeadingDeg * M_PI / 180.0) - theta)
+      * 180.0 / M_PI;
+
+  printf("Final heading adjust: %.2f deg\n", finalTurnDeg);
+
+  if (fabs(finalTurnDeg) > 1.0) {
+    turnTo(targetHeadingDeg);
+  }
+
+  printf("END   x=%.2f y=%.2f th=%.2f deg\n\n",
+         x, y, theta * 180.0 / M_PI);
+}
 
 
 
