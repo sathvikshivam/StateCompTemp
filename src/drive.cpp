@@ -105,23 +105,21 @@ void turnTo(double targetDeg) {
 
 
 
-
-// --------------------------------------------------
-// Drive straight (encoder based, smooth)
-// --------------------------------------------------
-
 void driveStraight(double inches) {
   // ---------- Constants ----------
-  const double WHEEL_DIAMETER = 2.75;     // inches (measure yours!)
+  const double WHEEL_DIAMETER = 2.75;     // inches (unchanged)
   const double WHEEL_CIRC     = M_PI * WHEEL_DIAMETER;
 
   const double FAST_PWR  = 50;
   const double SLOW_PWR  = 20;
-  const double SLOW_ZONE = 6.0;    // inches
-  const double STOP_ZONE = 0.5;    // inches
+  const double SLOW_ZONE = 6.0;
+  const double STOP_ZONE = 0.5;
 
-  const double LEAD_IN   = 1.0;    // stop early to counter coast
-  const double kH        = 1.2;    // heading correction gain
+  const double kH = 1.2;
+
+  // 🔧 MANUAL DISTANCE SCALE (TUNE THIS)
+  // Start around 0.45–0.50 based on your data
+  const double DIST_SCALE = 0.47;
 
   // ---------- Reset encoders ----------
   LeftFront.resetPosition();
@@ -136,36 +134,38 @@ void driveStraight(double inches) {
   }
   double desiredHeading = -Inertial.rotation(deg);
 
-  // ---------- Targets ----------
-  double adjustedTargetIn = inches - (inches > 0 ? LEAD_IN : -LEAD_IN);
-  double targetDeg = (adjustedTargetIn / WHEEL_CIRC) * 360.0;
+  // ---------- Apply scale ONLY HERE ----------
+  double scaledInches = inches * DIST_SCALE;
 
-  // ---------- Timing start ----------
-  double startMs = Brain.timer(vex::msec);
-  double logicStopMs = -1;
+  double targetDeg =
+    (scaledInches / WHEEL_CIRC) * 360.0;
 
-  printf("\nDRIVE START cmd=%.2f in (adj=%.2f in)\n", inches, adjustedTargetIn);
-  printf("Desired heading = %.2f deg\n", desiredHeading);
+  printf("\nDRIVE START\n");
+  printf("Commanded: %.2f in\n", inches);
+  printf("Scaled to : %.2f in (scale=%.3f)\n",
+         scaledInches, DIST_SCALE);
 
   while (true) {
     // ----- Encoder distance -----
-    double leftDeg  = (LeftFront.position(deg) + LeftBack.position(deg)) / 2.0;
-    double rightDeg = (RightFront.position(deg) + RightBack.position(deg)) / 2.0;
-    double avgDeg   = (leftDeg + rightDeg) / 2.0;
+    double leftDeg =
+      (LeftFront.position(deg) + LeftBack.position(deg)) / 2.0;
+    double rightDeg =
+      (RightFront.position(deg) + RightBack.position(deg)) / 2.0;
+    double avgDeg = (leftDeg + rightDeg) / 2.0;
 
     double errorDeg = targetDeg - avgDeg;
-    double errorIn  = (errorDeg / 360.0) * WHEEL_CIRC;
+    double errorIn =
+      (errorDeg / 360.0) * WHEEL_CIRC;
 
-    // ----- Stop condition (LOGIC STOP) -----
+    // ----- Stop -----
     if (fabs(errorIn) < STOP_ZONE) {
-      logicStopMs = Brain.timer(vex::msec);
-      printf("LOGIC STOP t=%.0f ms | distErrToAdj=%.2f in\n",
-             logicStopMs - startMs, errorIn);
+      printf("LOGIC STOP err=%.2f in\n", errorIn);
       break;
     }
 
     // ----- Base power -----
-    double basePower = (fabs(errorIn) > SLOW_ZONE) ? FAST_PWR : SLOW_PWR;
+    double basePower =
+      (fabs(errorIn) > SLOW_ZONE) ? FAST_PWR : SLOW_PWR;
     if (errorIn < 0) basePower = -basePower;
 
     // ----- Heading correction -----
@@ -173,7 +173,6 @@ void driveStraight(double inches) {
     double headingError   = desiredHeading - currentHeading;
     double turnCorrection = headingError * kH;
 
-    // ----- Motor outputs -----
     double leftPower  = basePower - turnCorrection;
     double rightPower = basePower + turnCorrection;
 
@@ -183,52 +182,21 @@ void driveStraight(double inches) {
     if (rightPower >  100) rightPower =  100;
     if (rightPower < -100) rightPower = -100;
 
-    // ----- Debug -----
-    printf("errAdj=%.2f in  headErr=%.2f deg  L=%.1f  R=%.1f\n",
-           errorIn, headingError, leftPower, rightPower);
+    printf("errIn=%.2f  headErr=%.2f\n",
+           errorIn, headingError);
 
-    // ----- Drive -----
     leftDrive.spin(vex::fwd, leftPower,  vex::percent);
     rightDrive.spin(vex::fwd, rightPower, vex::percent);
 
     wait(20, vex::msec);
   }
 
-  // ---------- Brake pulse ----------
-  leftDrive.spin(vex::fwd, -15, vex::percent);
-  rightDrive.spin(vex::fwd, -15, vex::percent);
-  wait(60, vex::msec);
-
   leftDrive.stop(vex::hold);
   rightDrive.stop(vex::hold);
 
-  // ---------- Timing end ----------
-  double endMs = Brain.timer(vex::msec);
-
-  // ---------- Final readings ----------
-  double fLeftDeg  = (LeftFront.position(deg) + LeftBack.position(deg)) / 2.0;
-  double fRightDeg = (RightFront.position(deg) + RightBack.position(deg)) / 2.0;
-  double fAvgDeg   = (fLeftDeg + fRightDeg) / 2.0;
-
-  double encoderDistIn = (fAvgDeg / 360.0) * WHEEL_CIRC;
-
-  double distErrVsCmd = inches - encoderDistIn;
-  double distErrVsAdj = adjustedTargetIn - encoderDistIn;
-
-  double finalHeading    = -Inertial.rotation(deg);
-  double finalHeadingErr = desiredHeading - finalHeading;
-
-  // ---------- Final report ----------
-  printf("=== DRIVE RESULT ===\n");
-  printf("Commanded distance : %.2f in\n", inches);
-  printf("Adjusted target    : %.2f in\n", adjustedTargetIn);
-  printf("Encoder distance   : %.2f in\n", encoderDistIn);
-  printf("Err vs commanded   : %.2f in\n", distErrVsCmd);
-  printf("Err vs adjusted    : %.2f in\n", distErrVsAdj);
-  printf("Final heading err  : %.2f deg\n", finalHeadingErr);
-  printf("Logic-stop time    : %.0f ms\n", (logicStopMs < 0 ? -1 : (logicStopMs - startMs)));
-  printf("Total function time: %.0f ms\n\n", endMs - startMs);
+  printf("DRIVE END\n\n");
 }
+
 
 
 
