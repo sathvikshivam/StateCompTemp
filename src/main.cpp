@@ -19,8 +19,8 @@ std::string autonSide = "left";   // used if FORCE_SIDE = true
 int getSideSign() {
   if (autonSide == "left") return 1;
   if (autonSide == "right") return -1;
-  // Fallback to left-side behavior if an unexpected value is provided
-  return 1;
+  // Fallback to right-side behavior if an unexpected value is provided
+  return -1;
 }
 #define AUTON_ONLY 1   // 🔁 change to 0 when done
 void updateControllerScreen() {
