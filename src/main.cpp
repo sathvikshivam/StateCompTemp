@@ -16,7 +16,9 @@ competition Competition;
 std::string alliance  = "red";    // used if FORCE_ALLIANCE = true
 std::string autonSide = "left";   // used if FORCE_SIDE = true
 
-
+int getSideSign() {
+  return (autonSide == "left") ? 1 : -1;
+}
 #define AUTON_ONLY 1   // 🔁 change to 0 when done
 void updateControllerScreen() {
   Controller1.Screen.clearScreen();
