@@ -33,10 +33,13 @@ void scoreOn(int speed, directionType dir) {
 
 
 void autonomousRoutine() {
+resetOdometry();
+startOdometry();
+  Inertial.resetRotation();
 
 double startTime = Brain.timer(vex::msec);
 
-goToPose(-36, 60, 180);
+goToPose(0, 22, -90);
 
 double endTime = Brain.timer(vex::msec);
 

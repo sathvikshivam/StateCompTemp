@@ -21,7 +21,7 @@ motor scoreMotor    = motor(PORT7,  ratio18_1, true);   // reversed YES
 
 // ---------------- Sensors ----------------
 inertial Inertial = inertial(PORT5);
-optical Optical   = optical(PORT12);
+optical Optical   = optical(PORT11);
 // ---------------- Pneumatics ----------------
 digital_out scraper = digital_out(Brain.ThreeWirePort.E);
 digital_out aligner = digital_out(Brain.ThreeWirePort.H);   

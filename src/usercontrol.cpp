@@ -55,6 +55,20 @@ double ramp(double target, double current, double step) {
 vex::color getAllianceColor() {
   return (alliance == "red") ? vex::red : vex::blue;
 }
+bool isAllianceColor() {
+  if (!Optical.installed()) return false;
+
+  vex::color c = Optical.color();
+
+  if (alliance == "red") {
+    return c == vex::red;
+  }
+  else if (alliance == "blue") {
+    return c == vex::blue;
+  }
+
+  return false;
+}
 
 
 // ================================================================
@@ -102,38 +116,50 @@ void userControlRoutine() {
     RightBack.spin(forward, rightCmd, percent);
 
     // ---------------- Game Piece Control ----------------
-    if (Controller1.ButtonL2.pressing()) {
-      conveyorMotor.stop(hold);
-      hoodMotor.stop(hold);
-      intakeMotor.spin(forward, 100, percent);
-      scoreMotor.stop(hold);
 
-    } 
-    else if (Controller1.ButtonL1.pressing()) {
-      conveyorMotor.spin(reverse, 100, percent);
-      hoodMotor.spin(reverse, 100, percent);
-      intakeMotor.spin(reverse, 100, percent);
-      scoreMotor.spin(reverse, 100, percent);
+ if (Controller1.ButtonR1.pressing()) {
 
-    } 
-    else if (Controller1.ButtonR1.pressing()) {
-      if (Optical.installed()){
-          if (Optical.color() == getAllianceColor()){
-            conveyorMotor.spin(forward, 100, percent);
-            hoodMotor.stop(hold);
-            intakeMotor.spin(forward, 100, percent);
-            scoreMotor.stop(hold);}
-          else{
-            conveyorMotor.spin(forward, 100, percent);
-            hoodMotor.stop(hold);
-            intakeMotor.spin(forward, 100, percent);
-            scoreMotor.spin(forward, 30, percent);}
-          }
-      else{
-      conveyorMotor.spin(forward, 100, percent);
-      hoodMotor.stop(hold);
-      intakeMotor.spin(forward, 100, percent);
-      scoreMotor.stop(hold);}}
+  // ---------- DEBUG ----------
+printf("installed=%d hue=%d\n",
+       Optical.installed(),
+       Optical.hue());
+
+
+  // ---------- ALWAYS RUN THESE ----------
+  conveyorMotor.spin(forward, 100, percent);
+  hoodMotor.stop(hold);
+  intakeMotor.spin(forward, 100, percent);
+
+  // ---------- SENSOR MISSING ----------
+ if (!Optical.installed()) {
+  scoreMotor.stop(hold);
+}
+else {
+
+  bool allianceBall = false;
+  int hue = Optical.hue();
+
+  if (hue >= 0 && hue < 360) {
+    if (alliance == "red") {
+      allianceBall = (hue <= 30 || hue >= 330);
+    }
+    else if (alliance == "blue") {
+      allianceBall = (hue >= 200 && hue <= 260);
+    }
+  }
+
+  if (allianceBall) {
+    scoreMotor.stop(hold);
+  }
+  else {
+    printf(">>> COMMANDING SCORE MOTOR 30%% <<<\n");
+
+    scoreMotor.spin(forward, 30, percent);
+  }
+}
+}
+
+
 
     else if (Controller1.ButtonR2.pressing()) {
       conveyorMotor.spin(forward, 100, percent);
@@ -155,6 +181,20 @@ void userControlRoutine() {
       aligner.set(false);
 
     }
+        else if (Controller1.ButtonL2.pressing()) {
+      conveyorMotor.stop(hold);
+      hoodMotor.stop(hold);
+      intakeMotor.spin(forward, 100, percent);
+      scoreMotor.stop(hold);
+
+    } 
+    else if (Controller1.ButtonL1.pressing()) {
+      conveyorMotor.spin(reverse, 100, percent);
+      hoodMotor.spin(reverse, 100, percent);
+      intakeMotor.spin(reverse, 100, percent);
+      scoreMotor.spin(reverse, 100, percent);
+
+    } 
     else {
       conveyorMotor.stop(coast);
       intakeMotor.stop(coast);

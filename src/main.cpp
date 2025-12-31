@@ -9,8 +9,8 @@ competition Competition;
 
 // ===== MANUAL OVERRIDES =====
 // Set these to true when you want to hard-code values
-#define FORCE_ALLIANCE  false
-#define FORCE_SIDE      false
+#define FORCE_ALLIANCE  true
+#define FORCE_SIDE      true
 
 // ===== DEFAULT / MANUAL VALUES =====
 std::string alliance  = "red";    // used if FORCE_ALLIANCE = true
@@ -20,7 +20,7 @@ int getSideSign() {
   if (autonSide == "left") return 1;
   if (autonSide == "right") return -1;
   // Fallback to right-side behavior if an unexpected value is provided
-  return -1;
+  return 1;
 }
 #define AUTON_ONLY 1   // 🔁 change to 0 when done
 void updateControllerScreen() {
@@ -76,16 +76,13 @@ void pre_auton(void) {
 
 int main() {
   vexcodeInit();
-
 #if AUTON_ONLY
   autonomousRoutine();
-  /*
 #else
+
   Competition.autonomous(autonomous);
   Competition.drivercontrol(usercontrol);
-  pre_auton();
   while (true) wait(100, msec);
-  */
 #endif
 }
 
