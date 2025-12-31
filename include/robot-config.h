@@ -24,7 +24,7 @@ extern motor scoreMotor;
 
 // ---------------- Sensors ----------------
 extern inertial Inertial;
-
+extern optical Optical;
 // ---------------- Pneumatics ----------------
 extern digital_out scraper;
 extern digital_out aligner;

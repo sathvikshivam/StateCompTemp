@@ -1,6 +1,6 @@
 #include "robot-config.h"   // REQUIRED
 #include "usercontrol.h"
-
+#include "main.h"
 // ================================================================
 //                    DRIVER TUNING VARIABLES
 // ================================================================
@@ -52,13 +52,17 @@ double ramp(double target, double current, double step) {
   if (target < current - step) return current - step;
   return target;
 }
+vex::color getAllianceColor() {
+  return (alliance == "red") ? vex::red : vex::blue;
+}
 
 
 // ================================================================
 //                     USER CONTROL LOOP
 // ================================================================
 void userControlRoutine() {
-
+  Optical.setLightPower(100, percent);
+  Optical.setLight(ledState::on);
   // Stored motor commands for braking control
   double leftCmd  = 0;
   double rightCmd = 0;
@@ -113,12 +117,24 @@ void userControlRoutine() {
 
     } 
     else if (Controller1.ButtonR1.pressing()) {
+      if (Optical.installed()){
+          if (Optical.color() == getAllianceColor()){
+            conveyorMotor.spin(forward, 100, percent);
+            hoodMotor.stop(hold);
+            intakeMotor.spin(forward, 100, percent);
+            scoreMotor.stop(hold);}
+          else{
+            conveyorMotor.spin(forward, 100, percent);
+            hoodMotor.stop(hold);
+            intakeMotor.spin(forward, 100, percent);
+            scoreMotor.spin(forward, 30, percent);}
+          }
+      else{
       conveyorMotor.spin(forward, 100, percent);
       hoodMotor.stop(hold);
       intakeMotor.spin(forward, 100, percent);
-      scoreMotor.stop(hold);
+      scoreMotor.stop(hold);}}
 
-    } 
     else if (Controller1.ButtonR2.pressing()) {
       conveyorMotor.spin(forward, 100, percent);
       hoodMotor.spin(forward, 100, percent);

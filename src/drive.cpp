@@ -2,7 +2,7 @@
 #include "drive.h"
 #include "odometry.h"
 #include <cmath>
-
+#include "main.h"
 using namespace vex;
 
 // --------------------------------------------------
@@ -41,6 +41,8 @@ void stopDrive() {
 // --------------------------------------------------
 
 void turnTo(double targetDeg) {
+  targetDeg = targetDeg * getSideSign();
+
   Inertial.resetRotation();
   while (Inertial.isCalibrating()) {
     wait(5, vex::msec);
@@ -226,63 +228,42 @@ void driveStraight(double inches) {
 
 
 
-void goToPose(double targetX, double targetY, double targetHeadingDeg) {
-  printf("\n=== GO TO POSE ===\n");
-  printf("Start  x=%.2f y=%.2f th=%.2f deg\n",
-         x, y, theta * 180.0 / M_PI);
-  printf("Target x=%.2f y=%.2f th=%.2f deg\n",
-         targetX, targetY, targetHeadingDeg);
+void goToPose(double targetX, double targetY, double desiredFinalHeadingDeg) {
+  printf("\n=== GO TO POSE (simple) ===\n");
 
-  // -----------------------------
-  // 1️⃣ Compute vector to target
-  // -----------------------------
+  // 1) Vector to target
   double dx = targetX - x;
   double dy = targetY - y;
 
-  double distance = sqrt(dx*dx + dy*dy);
+  double distance = sqrt(dx * dx + dy * dy);
 
-  // atan2(x, y) because 0 rad = +Y in your system
-  double targetAngleRad = atan2(dx, dy);
-  double targetAngleDeg = targetAngleRad * 180.0 / M_PI;
-
-  double currentHeadingDeg = theta * 180.0 / M_PI;
-  double turnAngleDeg = angleWrap(
-      targetAngleRad - theta) * 180.0 / M_PI;
+  // 2) Compute heading to face the point
+  // Flip X so left/right is swapped (your request)
+  double initialTurnDeg = atan2(-dx, dy) * 180.0 / M_PI;
 
   printf("dx=%.2f dy=%.2f\n", dx, dy);
-  printf("Turn to face target: %.2f deg\n", turnAngleDeg);
+  printf("Initial turn to face point: %.2f deg\n", initialTurnDeg);
   printf("Drive distance: %.2f in\n", distance);
 
-  // -----------------------------
-  // 2️⃣ Turn to face target point
-  // -----------------------------
-  if (fabs(turnAngleDeg) > 1.0) {
-    turnTo(targetAngleDeg);
-  }
+  // 3) Turn to face the point
+  turnTo(initialTurnDeg);
 
-  // -----------------------------
-  // 3️⃣ Drive straight to target
-  // -----------------------------
-  if (distance > 0.5) {
-    driveStraight(distance);
-  }
+  // 4) Drive straight (no intentional curves here)
+  driveStraight(distance);
 
-  // -----------------------------
-  // 4️⃣ Final heading correction
-  // -----------------------------
-  double finalTurnDeg = angleWrap(
-      (targetHeadingDeg * M_PI / 180.0) - theta)
-      * 180.0 / M_PI;
+  // 5) Compute final turn using YOUR rule
+  // final = desired + (90 - initialTurn)
+  double finalTurnDeg = desiredFinalHeadingDeg + (90.0 - initialTurnDeg);
 
-  printf("Final heading adjust: %.2f deg\n", finalTurnDeg);
+  printf("Desired final heading: %.2f deg\n", desiredFinalHeadingDeg);
+  printf("Computed final turn: %.2f deg\n", finalTurnDeg);
 
-  if (fabs(finalTurnDeg) > 1.0) {
-    turnTo(targetHeadingDeg);
-  }
+  // 6) Final turn
+  turnTo(finalTurnDeg-90);
 
-  printf("END   x=%.2f y=%.2f th=%.2f deg\n\n",
-         x, y, theta * 180.0 / M_PI);
+  printf("=== END GO TO POSE ===\n\n");
 }
+
 
 
 
