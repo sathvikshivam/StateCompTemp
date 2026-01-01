@@ -8,3 +8,4 @@ extern double theta;
 // Odometry control
 void resetOdometry();
 void startOdometry();
+void setOdometry(double startX, double startY, double startHeadingDeg);

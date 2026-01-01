@@ -41,18 +41,18 @@ void stopDrive() {
 // --------------------------------------------------
 
 void turnTo(double targetDeg) {
-  targetDeg = targetDeg * getSideSign();
+  targetDeg = (targetDeg) * getSideSign();
 
   Inertial.resetRotation();
   while (Inertial.isCalibrating()) {
     wait(5, vex::msec);
   }
 
-  const double FAST_PWR  = 35;   // slightly lower
+  const double FAST_PWR  = 20;   // slightly lower
   const double SLOW_PWR  = 12;
   const double SLOW_ZONE = 20.0;
   const double STOP_ZONE = 1.5;
-  const double LEAD      = 8.5;  // stop early to counter momentum
+  const double LEAD      = 8.5;//8.5;  // stop early to counter momentum
 
   bool crossedTarget = false;
 
@@ -112,7 +112,7 @@ void driveStraight(double inches) {
   const double WHEEL_DIAMETER = 2.75;
   const double WHEEL_CIRC     = M_PI * WHEEL_DIAMETER;
 
-  const double FAST_PWR  = 100;
+  const double FAST_PWR  = 90;
   const double SLOW_PWR  = 20;
   const double SLOW_ZONE = 6.0;
   const double STOP_ZONE = 0.5;
@@ -146,8 +146,8 @@ void driveStraight(double inches) {
   double scaledInches = inches * DIST_SCALE;
   double targetDeg = (scaledInches / WHEEL_CIRC) * 360.0;
 
-  printf("\nDRIVE START %.2f in (scaled %.2f)\n",
-         inches, scaledInches);
+ // printf("\nDRIVE START %.2f in (scaled %.2f)\n",
+         //inches, scaledInches);
 
   while (true) {
     // ----- Encoder distance -----
@@ -161,7 +161,7 @@ void driveStraight(double inches) {
     double errorIn  = (errorDeg / 360.0) * WHEEL_CIRC;
 
     if (fabs(errorIn) < STOP_ZONE) {
-      printf("LOGIC STOP err=%.2f in\n", errorIn);
+      //printf("LOGIC STOP err=%.2f in\n", errorIn);
       break;
     }
 
@@ -200,9 +200,9 @@ void driveStraight(double inches) {
       rightCmd = targetRight;
 
     // ----- Debug -----
-    printf("errIn=%.2f  L=%.1f→%.1f  R=%.1f→%.1f\n",
-           errorIn, targetLeft, leftCmd,
-           targetRight, rightCmd);
+    //printf("errIn=%.2f  L=%.1f→%.1f  R=%.1f→%.1f\n",
+           //errorIn, targetLeft, leftCmd,
+           //targetRight, rightCmd);
 
     // ----- Drive -----
     leftDrive.spin(vex::fwd, leftCmd,  vex::percent);
@@ -229,7 +229,7 @@ void driveStraight(double inches) {
 
 
 void goToPose(double targetX, double targetY, double desiredFinalHeadingDeg) {
-  printf("\n=== GO TO POSE (simple) ===\n");
+  //printf("\n=== GO TO POSE (simple) ===\n");
 
   // 1) Vector to target
   double dx = targetX - x;
@@ -241,9 +241,9 @@ void goToPose(double targetX, double targetY, double desiredFinalHeadingDeg) {
   // Flip X so left/right is swapped (your request)
   double initialTurnDeg = atan2(-dx, dy) * 180.0 / M_PI;
 
-  printf("dx=%.2f dy=%.2f\n", dx, dy);
-  printf("Initial turn to face point: %.2f deg\n", initialTurnDeg);
-  printf("Drive distance: %.2f in\n", distance);
+  //printf("dx=%.2f dy=%.2f\n", dx, dy);
+ // printf("Initial turn to face point: %.2f deg\n", initialTurnDeg);
+ // printf("Drive distance: %.2f in\n", distance);
 
   // 3) Turn to face the point
   turnTo(initialTurnDeg);
@@ -255,13 +255,15 @@ void goToPose(double targetX, double targetY, double desiredFinalHeadingDeg) {
   // final = desired + (90 - initialTurn)
   double finalTurnDeg = desiredFinalHeadingDeg + (90.0 - initialTurnDeg);
 
-  printf("Desired final heading: %.2f deg\n", desiredFinalHeadingDeg);
-  printf("Computed final turn: %.2f deg\n", finalTurnDeg);
+  //printf("Desired final heading: %.2f deg\n", desiredFinalHeadingDeg);
+  //printf("Computed final turn: %.2f deg\n", finalTurnDeg);
 
   // 6) Final turn
   turnTo(finalTurnDeg-90);
 
   printf("=== END GO TO POSE ===\n\n");
+  setOdometry(targetX, targetY, desiredFinalHeadingDeg);
+
 }
 
 

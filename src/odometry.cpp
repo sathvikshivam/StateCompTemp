@@ -70,11 +70,19 @@ void resetOdometry() {
 
   prevLeftIn = prevRightIn = 0;
   x = y = theta = 0;
-
+  y=22;
   Inertial.resetRotation();
   while (Inertial.isCalibrating()) {
     wait(10, msec);
   }
+}
+void setOdometry(double startX, double startY, double startHeadingDeg) {
+  x = startX;
+  y = startY;
+  theta = startHeadingDeg * M_PI / 180.0;
+
+  printf("ODOM SET: x=%.2f y=%.2f heading=%.2f deg\n",
+         x, y, startHeadingDeg);
 }
 
 void startOdometry() {

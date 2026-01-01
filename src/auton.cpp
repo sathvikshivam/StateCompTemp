@@ -30,20 +30,55 @@ void scoreOn(int speed, directionType dir) {
   intakeOn(speed, dir);
 
 }
+void hoardForTime(int durationMs) {
+
+  printf("HOARD START for %d ms\n", durationMs);
+
+  int start = Brain.timer(vex::msec);
+
+  while (Brain.timer(vex::msec) - start < durationMs) {
+
+    // Intake & conveyor ON
+    intakeMotor.spin(vex::forward, 100, vex::percent);
+    conveyorMotor.spin(vex::forward, 100, vex::percent);
+
+    // Score & hood held
+    scoreMotor.stop(vex::hold);
+    hoodMotor.stop(vex::hold);
+
+    wait(20, vex::msec);  // control loop
+  }
+
+  // Optional: stop intake/conveyor after hoard
+  intakeMotor.stop(vex::brake);
+  conveyorMotor.stop(vex::brake);
+
+  printf("HOARD END\n");
+}
+
+void driveInchesAsync(double inches, int speed = 30) {
+
+  double circumference = M_PI * 2.75;
+  double rotations = (inches / circumference) * (36/48); // gear ratio 48:36
+
+  leftDrive.setVelocity(speed, percent);
+  rightDrive.setVelocity(speed, percent);
+
+  leftDrive.spinFor(forward, rotations, rev, false); // doesn't wait
+  rightDrive.spinFor(forward, rotations, rev, false);
+}
 
 
 void autonomousRoutine() {
+
 resetOdometry();
 startOdometry();
-  Inertial.resetRotation();
-
-double startTime = Brain.timer(vex::msec);
-
-goToPose(0, 22, -90);
-
-double endTime = Brain.timer(vex::msec);
-
-
+driveStraight(22+(15.5/2));
+goToPose(30,22,-180);
+setOdometry(30,22,-200);
+scraper.set(true);
+goToPose(30,28,-200);
+hoardForTime(2200);
 
 
 
