@@ -71,14 +71,9 @@ void driveInchesAsync(double inches, int speed = 30) {
 
 void autonomousRoutine() {
 
-resetOdometry();
-startOdometry();
-driveStraight(22+(15.5/2));
-goToPose(30,22,-180);
-setOdometry(30,22,-200);
-scraper.set(true);
-goToPose(30,28,-200);
-hoardForTime(2200);
+hoardForTime(2000);
+driveStraight(22);
+
 
 
 

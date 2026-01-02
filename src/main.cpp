@@ -22,7 +22,7 @@ int getSideSign() {
   // Fallback to right-side behavior if an unexpected value is provided
   return 1;
 }
-#define AUTON_ONLY 1   // 🔁 change to 0 when done
+#define AUTON_ONLY  0  // 🔁 change to 0 when done
 void updateControllerScreen() {
   Controller1.Screen.clearScreen();
   Controller1.Screen.setCursor(1, 1);
@@ -41,7 +41,7 @@ void autonomous() {
 }
 
 void usercontrol() {
-  //userControlRoutine();
+  userControlRoutine();
 }
 void pre_auton(void) {
 
