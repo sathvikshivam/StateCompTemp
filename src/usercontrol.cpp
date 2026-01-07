@@ -4,10 +4,10 @@
 // ================================================================
 //                    DRIVER TUNING VARIABLES
 // ================================================================
-
 // Driving sensitivity (expo curve)
 // 1.0 = linear, 1.5–2.0 = smoother low speed
 constexpr double kDriveSensitivity = 3;
+digital_out descore = digital_out(Brain.ThreeWirePort.D);
 
 // Turn assist
 // 0.0 = OFF (pure tank)
@@ -17,7 +17,7 @@ constexpr double kTurnAssist = 0.3;
 // Braking sensitivity (deceleration rate)
 // LOWER = harder braking
 // HIGHER = smoother braking
-constexpr double kBrakeSensitivity = 200.0;
+constexpr double kBrakeSensitivity = 550.0;
 
 // Acceleration rate (leave higher than brake)
 constexpr double kAccelRate = 400.0;
@@ -85,20 +85,36 @@ void userControlRoutine() {
   while (true) {
 
     // ---------------- Tank Drive Input ----------------
-    double forwardRaw = Controller1.Axis3.position(percent);
-    double turnRaw    = Controller1.Axis1.position(percent);
+    double leftRaw  = Controller1.Axis3.position(percent); // Left stick
+    double rightRaw = Controller1.Axis2.position(percent); // Right stick
 
-    forwardRaw = expoPercent(forwardRaw, kCurveExp);
-    turnRaw    = expoPercent(turnRaw,    kCurveExp);
+    // Sensitivity (expo)
+    leftRaw  = expoPercent(leftRaw,  kDriveSensitivity);
+    rightRaw = expoPercent(rightRaw, kDriveSensitivity);
 
-    forwardRaw = applyDeadband(forwardRaw, kDeadbandPct);
-    turnRaw    = applyDeadband(turnRaw,    kDeadbandPct);
+    // Deadband
+    leftRaw  = applyDeadband(leftRaw,  kDeadbandPct);
+    rightRaw = applyDeadband(rightRaw, kDeadbandPct);
 
-    double leftVal  = clamp100(forwardRaw + turnRaw);
-    double rightVal = clamp100(forwardRaw - turnRaw);
+    // ---------------- Turn Assist ----------------
+    double turn   = leftRaw - rightRaw;
+    double assist = turn * kTurnAssist;
 
-    leftDrive.spin(forward, leftVal, percent);
-    rightDrive.spin(forward, rightVal, percent);
+    double leftTarget  = clamp100(leftRaw  + assist);
+    double rightTarget = clamp100(rightRaw - assist);
+
+    // ---------------- Braking Sensitivity ----------------
+    double leftStep  = (fabs(leftTarget)  < fabs(leftCmd))  ? kBrakeSensitivity : kAccelRate;
+    double rightStep = (fabs(rightTarget) < fabs(rightCmd)) ? kBrakeSensitivity : kAccelRate;
+
+    leftCmd  = ramp(leftTarget,  leftCmd,  leftStep);
+    rightCmd = ramp(rightTarget, rightCmd, rightStep);
+
+    // Drive motors
+    LeftFront.spin(forward, leftCmd, percent);
+    LeftBack.spin(forward, leftCmd, percent);
+    RightFront.spin(forward, rightCmd, percent);
+    RightBack.spin(forward, rightCmd, percent);
 
     // ---------------- Game Piece Control ----------------
 
@@ -179,8 +195,14 @@ else {
       intakeMotor.spin(reverse, 100, percent);
       scoreMotor.spin(reverse, 100, percent);
 
-    } 
-    else {
+    }
+    else if (Controller1.ButtonX.pressing()) {
+      descore.set(true);
+    }
+    else if (Controller1.ButtonA.pressing()) {
+      descore.set(false);
+
+    }    else {
       conveyorMotor.stop(coast);
       intakeMotor.stop(coast);
       hoodMotor.stop(coast);

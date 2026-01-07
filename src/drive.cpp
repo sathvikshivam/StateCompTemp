@@ -41,12 +41,10 @@ void stopDrive() {
 // --------------------------------------------------
 
 void turnTo(double targetDeg) {
-  targetDeg = (targetDeg) * getSideSign();
+  double startHeading = Inertial.rotation(deg);
 
-  Inertial.resetRotation();
-  while (Inertial.isCalibrating()) {
-    wait(5, vex::msec);
-  }
+  targetDeg = (startHeading + targetDeg) * getSideSign();
+
 
   const double FAST_PWR  = 20;   // slightly lower
   const double SLOW_PWR  = 12;
@@ -82,7 +80,7 @@ void turnTo(double targetDeg) {
 
     double power = (fabs(error) > SLOW_ZONE) ? FAST_PWR : SLOW_PWR;
     if (error < 0) power = -power;
-
+    
     leftDrive.spin(vex::fwd, -power, vex::percent);
     rightDrive.spin(vex::fwd,  power, vex::percent);
 
@@ -136,11 +134,7 @@ void driveStraight(double inches) {
   RightBack.resetPosition();
 
   // ---------- Reset & lock heading ----------
-  Inertial.resetRotation();
-  while (Inertial.isCalibrating()) {
-    wait(5, vex::msec);
-  }
-  double desiredHeading = -Inertial.rotation(deg);
+  double desiredHeading = -Inertial. rotation(deg);
 
   // ---------- Apply scale ----------
   double scaledInches = inches * DIST_SCALE;
