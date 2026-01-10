@@ -25,7 +25,7 @@ optical Optical   = optical(PORT11);
 // ---------------- Pneumatics ----------------
 digital_out scraper = digital_out(Brain.ThreeWirePort.E);
 digital_out aligner = digital_out(Brain.ThreeWirePort.H);   
-
+digital_out descore = digital_out(Brain.ThreeWirePort.D);
 // ---------------- VEXCODE INIT ----------------
 void vexcodeInit(void) {
   // Calibrate sensors if needed

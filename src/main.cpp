@@ -11,7 +11,7 @@ competition Competition;
 
 // ===== DEFAULT / MANUAL VALUES =====
 std::string alliance  = "red";    // used if FORCE_ALLIANCE = true
-std::string autonSide = "right";   // used if FORCE_SIDE = true
+std::string autonSide = "left";   // used if FORCE_SIDE = true
 
 void autonomous() {
   autonomousRoutine();

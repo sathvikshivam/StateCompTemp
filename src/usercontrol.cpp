@@ -18,6 +18,7 @@ constexpr double kTurnAssist = 0.3;
 // LOWER = harder braking
 // HIGHER = smoother braking
 constexpr double kBrakeSensitivity = 550.0;
+constexpr double kBrakeSensitivity = 550.0;
 
 // Acceleration rate (leave higher than brake)
 constexpr double kAccelRate = 400.0;
@@ -83,38 +84,21 @@ void userControlRoutine() {
   double rightCmd = 0;
 
   while (true) {
-
     // ---------------- Tank Drive Input ----------------
-    double leftRaw  = Controller1.Axis3.position(percent); // Left stick
-    double rightRaw = Controller1.Axis2.position(percent); // Right stick
+    double forwardRaw = Controller1.Axis3.position(percent);
+    double turnRaw    = Controller1.Axis1.position(percent);
 
-    // Sensitivity (expo)
-    leftRaw  = expoPercent(leftRaw,  kDriveSensitivity);
-    rightRaw = expoPercent(rightRaw, kDriveSensitivity);
+    forwardRaw = expoPercent(forwardRaw, kCurveExp);
+    turnRaw    = expoPercent(turnRaw,    kCurveExp);
 
-    // Deadband
-    leftRaw  = applyDeadband(leftRaw,  kDeadbandPct);
-    rightRaw = applyDeadband(rightRaw, kDeadbandPct);
+    forwardRaw = applyDeadband(forwardRaw, kDeadbandPct);
+    turnRaw    = applyDeadband(turnRaw,    kDeadbandPct);
 
-    // ---------------- Turn Assist ----------------
-    double turn   = leftRaw - rightRaw;
-    double assist = turn * kTurnAssist;
+    double leftVal  = clamp100(forwardRaw + turnRaw);
+    double rightVal = clamp100(forwardRaw - turnRaw);
 
-    double leftTarget  = clamp100(leftRaw  + assist);
-    double rightTarget = clamp100(rightRaw - assist);
-
-    // ---------------- Braking Sensitivity ----------------
-    double leftStep  = (fabs(leftTarget)  < fabs(leftCmd))  ? kBrakeSensitivity : kAccelRate;
-    double rightStep = (fabs(rightTarget) < fabs(rightCmd)) ? kBrakeSensitivity : kAccelRate;
-
-    leftCmd  = ramp(leftTarget,  leftCmd,  leftStep);
-    rightCmd = ramp(rightTarget, rightCmd, rightStep);
-
-    // Drive motors
-    LeftFront.spin(forward, leftCmd, percent);
-    LeftBack.spin(forward, leftCmd, percent);
-    RightFront.spin(forward, rightCmd, percent);
-    RightBack.spin(forward, rightCmd, percent);
+    leftDrive.spin(forward, leftVal, percent);
+    rightDrive.spin(forward, rightVal, percent);
 
     // ---------------- Game Piece Control ----------------
 
@@ -169,6 +153,13 @@ else {
       scoreMotor.spin(forward, 100, percent);
 
     }
+    else if (Controller1.ButtonX.pressing()) {
+      descore.set(true);
+    }
+    else if (Controller1.ButtonA.pressing()) {
+      descore.set(false);
+
+    }
     else if (Controller1.ButtonLeft.pressing()) {
       scraper.set(true);
       aligner.set(false);
@@ -196,13 +187,7 @@ else {
       scoreMotor.spin(reverse, 100, percent);
 
     }
-    else if (Controller1.ButtonX.pressing()) {
-      descore.set(true);
-    }
-    else if (Controller1.ButtonA.pressing()) {
-      descore.set(false);
-
-    }    else {
+    else {
       conveyorMotor.stop(coast);
       intakeMotor.stop(coast);
       hoodMotor.stop(coast);

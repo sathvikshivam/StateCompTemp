@@ -28,3 +28,4 @@ extern optical Optical;
 // ---------------- Pneumatics ----------------
 extern digital_out scraper;
 extern digital_out aligner;
+extern digital_out descore;
