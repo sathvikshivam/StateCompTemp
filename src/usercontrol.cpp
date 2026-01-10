@@ -7,7 +7,6 @@
 // Driving sensitivity (expo curve)
 // 1.0 = linear, 1.5–2.0 = smoother low speed
 constexpr double kDriveSensitivity = 3;
-digital_out descore = digital_out(Brain.ThreeWirePort.D);
 
 // Turn assist
 // 0.0 = OFF (pure tank)
@@ -17,7 +16,6 @@ constexpr double kTurnAssist = 0.3;
 // Braking sensitivity (deceleration rate)
 // LOWER = harder braking
 // HIGHER = smoother braking
-constexpr double kBrakeSensitivity = 550.0;
 constexpr double kBrakeSensitivity = 550.0;
 
 // Acceleration rate (leave higher than brake)
